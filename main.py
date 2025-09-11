@@ -18,6 +18,9 @@ def main():
     font = pygame.font.SysFont(None, 32)
 
     board = Board(ROWS, COLS)
+    board = Board(ROWS, COLS)
+    
+    
 
     running = True
     while running:
@@ -32,16 +35,28 @@ def main():
             elif event.type == pygame.MOUSEBUTTONDOWN and not board.gameOver:
                 # x & y coordinates of mouse
                 mx, my = event.pos
-                row = my // CELL_SIZE
+                my_grid = my - GAME_STATE_OBJ_SIZE
+                
+                if my_grid < 0:
+                    continue  
+
+                row = my_grid // CELL_SIZE
                 col = mx // CELL_SIZE
+
+                if not (0 <= row < ROWS and 0 <= col < COLS):
+                    continue
+
+                cell = board.grid[col][row]
                 if event.button == 1:
-                    # reveal square
-                    pass
-
+                    if not cell.isFlagged:
+                        cell.isClicked = True
+                        if cell.cellState == 3:
+                            board.gameOver = True
                 elif event.button == 3:
-                    # add a flag
-                    pass
+                    if not cell.isClicked:
+                        cell.isFlagged = not cell.isFlagged
 
+        
         screen.fill(BG_COLOR)
         board.draw(screen)
         pygame.display.flip()

@@ -1,8 +1,9 @@
 '''
-Author: 
-Date:
-Purpose:
-External Sources:
+Author: K Li
+Date: 2025-09-11
+Update: Added UI drawing for flags, mines, and numbers
+Purpose: Cell class with rendering logic for Minesweeper
+External Sources: N/A
 '''
 
 # Cell Definition
@@ -20,16 +21,48 @@ class Cell:
         self.isClicked = False # bool to check if cell is clicked
         self.isFlagged = False # bool to check if cell flagged
         self.adjMines = 0
-
+    
+    # Updated by K Li on 2025-09-11
+    # Added number rendering (colored text), mine (circle), and flag (triangle)
     def draw(self, gridSurface):
+        x = self.col * CELL_SIZE
+        y = self.row * CELL_SIZE
+        rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
+        # Create a rectangle for this cell based on its position
         rect = pygame.Rect(self.rowSize, self.colSize, CELL_SIZE, CELL_SIZE)
 
-        if self.cellState == 0:
-            color = (GRID_COLOR)
-        elif self.cellState == 3:
-            color = (BOMB_COLOR)
-        else:
-            color = (0, 0, 0)
+        # Default rendering for a covered cell
+        pygame.draw.rect(gridSurface, GRID_COLOR, rect)
+        pygame.draw.rect(gridSurface, BORDER_COLOR, rect, 1)
 
-        pygame.draw.rect(gridSurface, color, rect)
-        pygame.draw.rect(gridSurface, (0, 0, 0), rect, 1)
+        if self.isClicked:
+            # If the cell has been revealed
+            pygame.draw.rect(gridSurface, REVEALED_BG, rect)
+            pygame.draw.rect(gridSurface, BORDER_COLOR, rect, 1)
+
+            if self.cellState == 3:
+                # Draw a mine as a black circle if this cell is a mine
+                pygame.draw.circle(gridSurface, MINE_COLOR, rect.center, CELL_SIZE // 4)
+            elif self.adjMines > 0:
+                # Draw the number of adjacent mines with the proper color
+                color = NUMBER_COLORS.get(self.adjMines, TEXT_COLOR)
+                font = pygame.font.SysFont(None, 24)
+                num_surface = font.render(str(self.adjMines), True, color)
+                num_rect = num_surface.get_rect(center=rect.center)
+                gridSurface.blit(num_surface, num_rect)
+            # If adjMines == 0, leave it as an empty revealed cell
+        else:
+            # If the cell is still covered, show a flag if it is flagged
+            if self.isFlagged:
+                pole_x = rect.x + CELL_SIZE // 3
+                # Draw the flag pole
+                pygame.draw.line(gridSurface, (80, 80, 80),
+                                (pole_x, rect.y + CELL_SIZE // 4),
+                                (pole_x, rect.y + 3 * CELL_SIZE // 4), 2)
+                # Draw the triangular red flag
+                flag_pts = [
+                    (pole_x, rect.y + CELL_SIZE // 4),
+                    (pole_x + CELL_SIZE // 2, rect.y + CELL_SIZE // 3),
+                    (pole_x, rect.y + CELL_SIZE // 2)
+                ]
+                pygame.draw.polygon(gridSurface, FLAG_COLOR, flag_pts)
