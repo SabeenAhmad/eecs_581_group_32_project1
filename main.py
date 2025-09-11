@@ -17,7 +17,7 @@ def main():
     pygame.display.set_caption("Minesweeper")
     font = pygame.font.SysFont(None, 32)
 
-    board = Board(ROWS, COLS, MINES)
+    board = Board(ROWS, COLS)
 
     running = True
     while running:
@@ -43,7 +43,7 @@ def main():
                     pass
 
         screen.fill(BG_COLOR)
-        board.draw(screen, font)
+        board.draw(screen)
         pygame.display.flip()
 
     pygame.quit()
