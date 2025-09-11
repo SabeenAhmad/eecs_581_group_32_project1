@@ -1,3 +1,10 @@
+'''
+Author: 
+Date:
+Purpose:
+External Sources:
+'''
+
 # Cell Definition
 
 import pygame
@@ -7,9 +14,9 @@ class Cell:
     def __init__(self, row, col):
         self.row = row
         self.col = col
-        self.isMine = False
-        self.isRevealed = False
-        self.isFlagged = False
+        self.isMine = False # bool to check if cell is mine
+        self.isClicked = False # bool to check if cell is clicked
+        self.isFlagged = False # bool to check if cell flagged
         self.adjMines = 0
 
     def draw(self, screen, font):
