@@ -13,14 +13,14 @@ from config import *
 
 class Cell:
     def __init__(self, row, col, cellState):
-        self.row = row
-        self.rowSize = row * CELL_SIZE
-        self.col = col
-        self.colSize = col * CELL_SIZE
-        self.cellState = cellState
+        self.row = row # y pos of grid
+        self.rowSize = row * CELL_SIZE # size of row, height of grid
+        self.col = col # x pos of grid
+        self.colSize = col * CELL_SIZE # size of col, width of grid
+        self.cellState = cellState # state of cell, 3 is mine
         self.isClicked = False # bool to check if cell is clicked
         self.isFlagged = False # bool to check if cell flagged
-        self.adjMines = 0
+        self.adjMines = 0 # var to count adjacent mines
     
     # Updated by K Li on 2025-09-11
     # Added number rendering (colored text), mine (circle), and flag (triangle)
@@ -66,3 +66,39 @@ class Cell:
                     (pole_x, rect.y + CELL_SIZE // 2)
                 ]
                 pygame.draw.polygon(gridSurface, FLAG_COLOR, flag_pts)
+    
+    # updated by Jenna Luong 9/13/25
+    # recursively reveals grid
+    def revealGrid(self, grid):
+        self.isClicked = True
+        
+        # if mine is clicked reveal all mines (game over)
+        if self.cellState == 3:
+            for row in grid:
+                for cell in row:
+                    # if cellState is a mine, reveal that cell
+                    if cell.cellState == 3 and not cell.isClicked:
+                        cell.isClicked = True
+        
+        # reveal mines if there are no adjacent mines
+        if self.adjMines == 0:
+            rows = len(grid)
+            cols = len(grid[0]) if rows > 0 else 0
+
+            # check all 8 adj cells
+            for r in range(-1,2):
+                for c in range(-1,2):
+                    if r == 0 and c == 0:
+                        continue # skip current cell
+
+                new_row = self.row + r
+                new_col = self.col + c
+
+                # check if adj cell within cell bounds
+                if 0 <= new_row < rows and 0 <= new_col < cols:
+                    adjCell = grid[new_row][new_col]
+                    if not adjCell.isClicked and not adjCell.isFlagged:
+                        adjCell.revealGrid(grid)
+                    
+
+
