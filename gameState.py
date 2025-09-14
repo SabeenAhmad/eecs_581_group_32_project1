@@ -14,7 +14,6 @@ class State:
         self.flags = 0
         self.gameOver = False 
         self.victory = False
-        
             
     def updateMine(self,font,screen):
         self.mines -= 1

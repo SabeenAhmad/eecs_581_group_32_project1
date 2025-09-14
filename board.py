@@ -18,7 +18,6 @@ class Board:
         self.cols = cols
         self.gridSurface = pygame.Surface((WIDTH, HEIGHT - GAME_STATE_OBJ_SIZE))
         self.grid = [[Cell(r, c, 0) for c in range(cols)] for r in range(rows)]
-        self.addMines()
         self.gameOver = False # bool to check if game over (mine clicked on grid)
         self.victory = False
         print(self.grid)
@@ -37,3 +36,6 @@ class Board:
                 if self.grid[row][col].cellState == 0:
                     self.grid[row][col].cellState = 3
                     break
+
+    def insertMines(self):
+        self.addMines()
