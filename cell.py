@@ -24,12 +24,16 @@ class Cell:
     
     # Updated by K Li on 2025-09-11
     # Added number rendering (colored text), mine (circle), and flag (triangle)
+    def rect(self):
+        x = self.col * CELL_SIZE
+        y = self.row * CELL_SIZE
+        return pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
     def draw(self, gridSurface):
+        # Updated by Kit — 2025-09-15: correct x/y from col/row (fix click/draw alignment)
         x = self.col * CELL_SIZE
         y = self.row * CELL_SIZE
         rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
-        # Create a rectangle for this cell based on its position
-        rect = pygame.Rect(self.rowSize, self.colSize, CELL_SIZE, CELL_SIZE)
+        #$Create a rectangle for this cell based on its position    
 
         # Default rendering for a covered cell
         pygame.draw.rect(gridSurface, GRID_COLOR, rect)
@@ -69,36 +73,44 @@ class Cell:
     
     # updated by Jenna Luong 9/13/25
     # recursively reveals grid
+    # Updated by Kit — 2025-09-15: When a cell with 0 adjacent mines is clicked it needs to reveal all touching 0-cells.
     def revealGrid(self, grid):
+        # Skip if this cell is already opened or flagged
+        if self.isClicked or self.isFlagged:
+            return
+
+        # reveal cell
         self.isClicked = True
-        
+
         # if mine is clicked reveal all mines (game over)
-        if self.cellState == 3:
-            for row in grid:
-                for cell in row:
-                    # if cellState is a mine, reveal that cell
-                    if cell.cellState == 3 and not cell.isClicked:
-                        cell.isClicked = True
-        
+        # Updated by Kit — 2025-09-15: early return on mine; Board handles revealing all mines
+        if self.cellState == 3:  # If you have Cell.MINE, you can use that instead
+            return
+
+        # NOTE: Ideally, revealing all mines should be handled by Board.reveal_all_mines().
+        # (Removed unreachable loop here — it was after a return.)
+        # If you keep mine-reveal here, ensure it runs BEFORE returning.
+
         # reveal mines if there are no adjacent mines
+        # Kit — Reveal neighbors when there are no adjacent mines.
         if self.adjMines == 0:
             rows = len(grid)
             cols = len(grid[0]) if rows > 0 else 0
 
             # check all 8 adj cells
-            for r in range(-1,2):
-                for c in range(-1,2):
+            # Updated by Kit — 2025-09-15: compute neighbor coords INSIDE the inner loop so flood-fill expands
+            for r in range(-1, 2):
+                for c in range(-1, 2):
                     if r == 0 and c == 0:
-                        continue # skip current cell
+                        continue  # skip current cell
 
-                new_row = self.row + r
-                new_col = self.col + c
+                    new_row = self.row + r          # Updated by Kit — 2025-09-15
+                    new_col = self.col + c          # Updated by Kit — 2025-09-15
 
-                # check if adj cell within cell bounds
-                if 0 <= new_row < rows and 0 <= new_col < cols:
-                    adjCell = grid[new_row][new_col]
-                    if not adjCell.isClicked and not adjCell.isFlagged:
-                        adjCell.revealGrid(grid)
-                    
+                    # check if adj cell within cell bounds
+                    if 0 <= new_row < rows and 0 <= new_col < cols:
+                        adjCell = grid[new_row][new_col]
+                        if not adjCell.isClicked and not adjCell.isFlagged:
+                            adjCell.revealGrid(grid)
 
 
