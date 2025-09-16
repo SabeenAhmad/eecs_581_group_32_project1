@@ -4,7 +4,7 @@ Date:
 Purpose:
 External Sources:
 '''
-
+import numpy as np
 import pygame
 from config import *
 from board import Board
@@ -34,7 +34,7 @@ def main():
                 col = mx // CELL_SIZE
                 if not (0 <= row < ROWS and 0 <= col < COLS):
                     continue
-                cell = board.grid[col][row]
+                cell = board.grid[row][col]
                 if event.button == 1:
                     if not cell.isFlagged:
                         cell.isClicked = True
@@ -42,7 +42,9 @@ def main():
                         if firstClick == True:
                             cell.cellState = 2
                             firstClick = False
-                            board.insertMines()
+                            board.insertMines((row,col))
+                        # Updated by Kit — 2025-09-15: reveal using flood-fill so zeros expand
+                        cell.revealGrid(board.grid)
                         if cell.cellState == 3:
                             board.gameOver = True
                 elif event.button == 3:
