@@ -84,14 +84,9 @@ class Cell:
 
         # if mine is clicked reveal all mines (game over)
         # Updated by Kit — 2025-09-15: early return on mine; Board handles revealing all mines
-        if self.cellState == 3:  # If you have Cell.MINE, you can use that instead
+        if self.cellState == 3:  
             return
 
-        # NOTE: Ideally, revealing all mines should be handled by Board.reveal_all_mines().
-        # (Removed unreachable loop here — it was after a return.)
-        # If you keep mine-reveal here, ensure it runs BEFORE returning.
-
-        # reveal mines if there are no adjacent mines
         # Kit — Reveal neighbors when there are no adjacent mines.
         if self.adjMines == 0:
             rows = len(grid)
