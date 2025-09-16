@@ -20,7 +20,11 @@ class Board:
         self.grid = [[Cell(r, c, 0) for c in range(cols)] for r in range(rows)]
         self.gameOver = False # bool to check if game over (mine clicked on grid)
         self.victory = False
-        print(self.grid)
+    
+    def mines_left(self):
+        # Updated by Bryce — 2025-09-15: calculate mines left
+        flags = sum(cell.isFlagged for row in self.grid for cell in row)
+        return max(MINES - flags, 0)
 
     def draw(self, screen):
     # Updated by Kit — 2025-09-15: clear once per frame (moved out of the loop)
@@ -32,26 +36,36 @@ class Board:
 
         screen.blit(self.gridSurface, (0, GAME_STATE_OBJ_SIZE))
 
+        font = pygame.font.SysFont(None, 36)
+        mines_text = font.render(f"Mines left: {self.mines_left()}", True, (0, 0, 0))
+        screen.blit(mines_text, (10, 10))
+
             
     def addMines(self, safe_rc):
         # Updated by Kit — 2025-09-15: skip the first-clicked safe cell when placing mines
         safe_r, safe_c = safe_rc
+
+        safe_zone = set()
+        for dr in (-1, 0, 1):
+            for dc in (-1, 0, 1):
+                nr, nc = safe_r + dr, safe_c + dc
+                if 0 <= nr < self.rows and 0 <= nc < self.cols:
+                    safe_zone.add((nr, nc))
         placed = 0
         while placed < MINES:
             r = random.randint(0, self.rows - 1)
             c = random.randint(0, self.cols - 1)
-            if (r == safe_r and c == safe_c):
+            if (r, c) in safe_zone:
                 continue
             if self.grid[r][c].cellState == 0:
                 self.grid[r][c].cellState = 3  # mine
-            placed += 1
+                placed += 1
 
     def insertMines(self, safe_rc):
         # Updated by Kit — 2025-09-15: place mines away from safe cell and compute numbers once
         self.addMines(safe_rc)
         self.compute_adjacents()
         self.minesPlaced = True
-
 
     # Updated by Kit — 2025-09-15: count adjacent mines once after placement
     def compute_adjacents(self):
