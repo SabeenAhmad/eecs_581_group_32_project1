@@ -40,8 +40,10 @@ class InputHandler:
                         # Updated by Kit — 2025-09-15: reveal using flood-fill so zeros expand
                         cell.revealGrid(self.board.grid)
                     cell.isClicked = True
+                    # if mine is clicked, game over
                     if cell.cellState == 3:
                         self.board.gameOver = True
+                        self.board.revealMines() # updated by Jenna - reveal all mines once game is over
             elif event.button == 3:
                 if not cell.isClicked:
                     cell.isFlagged = not cell.isFlagged

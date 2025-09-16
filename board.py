@@ -1,7 +1,7 @@
 '''
 Author: Jenna Luong
 Date: 9/10/25
-Purpose:
+Purpose: create & manage 2D grid, insert mines, compute adjacent mines, 
 External Sources:
 '''
 
@@ -66,6 +66,16 @@ class Board:
         self.addMines(safe_rc)
         self.compute_adjacents()
         self.minesPlaced = True
+
+    # updated by Jenna - reveal all mines on board
+    def revealMines(self):
+        # iterate through grid and for each cell if there's a mine reveal it
+        for row in self.grid:
+            for cell in row:
+                # if cellState is a mine, reveal that cell
+                if cell.cellState == 3:
+                    cell.isClicked = True # reveal cell
+        
 
     # Updated by Kit — 2025-09-15: count adjacent mines once after placement
     def compute_adjacents(self):
