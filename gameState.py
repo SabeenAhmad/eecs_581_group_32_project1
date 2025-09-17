@@ -6,7 +6,6 @@ External Sources:
 '''
 
 from config import *
-import pygame
 
 class State:
     def __init__(self):

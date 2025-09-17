@@ -48,6 +48,7 @@ class Cell:
                 # Draw a mine as a black circle if this cell is a mine
                 pygame.draw.circle(gridSurface, MINE_COLOR, rect.center, CELL_SIZE // 4)
             elif self.adjMines > 0:
+                self.cellState = 2 # Updates cell state
                 # Draw the number of adjacent mines with the proper color
                 color = NUMBER_COLORS.get(self.adjMines, TEXT_COLOR)
                 font = pygame.font.SysFont(None, 24)
@@ -81,6 +82,10 @@ class Cell:
 
         # reveal cell
         self.isClicked = True
+
+        #Updates cell state
+        if self.cellState == 0:
+            self.cellState = 2
 
         # if mine is clicked reveal all mines (game over)
         # Updated by Kit — 2025-09-15: early return on mine; Board handles revealing all mines

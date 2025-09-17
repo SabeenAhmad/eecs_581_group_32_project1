@@ -96,3 +96,13 @@ class Board:
                                 cnt += 1
                 cell.adjMines = cnt
 
+    #Check if there are any covereds left (victory)
+    def victoryCheck(self):
+        coveredcount = 0
+        for row in self.grid:
+            for cell in row:
+                if cell.cellState == 0:
+                    coveredcount += 1
+        if coveredcount == 0:
+            self.gameOver = True
+            self.victory = True
