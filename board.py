@@ -46,6 +46,16 @@ class Board:
         mines_text = font.render(f"Mine count: {self.mine_count}", True, (0, 0, 0))
         screen.blit(mines_text, (10, 40))
 
+        # Render labels for columns
+        for c in range(self.cols):
+            colLabel = font.render(chr(65 + c), True, TEXT_COLOR)
+            screen.blit(colLabel, (c * CELL_SIZE + 10, GAME_STATE_OBJ_SIZE-(CELL_SIZE/2) - 10))
+
+        # Render labels for rows
+        for r in range(self.rows):
+            rowLabel = font.render(str(r + 1), True, TEXT_COLOR)
+            screen.blit(rowLabel , (WIDTH-COL_LABEL_SIZE + 10, GAME_STATE_OBJ_SIZE + (r * CELL_SIZE)+10 ))
+
     # Places mines on board.
     def addMines(self, safe_rc):
         # Skip the first-clicked safe cell when placing mines
