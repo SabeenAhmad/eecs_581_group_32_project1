@@ -23,8 +23,8 @@ class Board:
         self.gameOver = False # bool to check if game over (mine clicked on grid)
         self.victory = False # bool to check if won
     
-    # Calculate mines left by subtracting from flags
-    def mines_left(self):
+    # Calculate flag count by subtracting flags from mines
+    def flag_count(self):
         flags = sum(cell.isFlagged for row in self.grid for cell in row)
         return max(MINES - flags, 0)
 
@@ -36,10 +36,14 @@ class Board:
             for cell in row:
                 cell.draw(self.gridSurface)
         screen.blit(self.gridSurface, (0, GAME_STATE_OBJ_SIZE))
-        # Renders how many mines are left.
+        # Renders how many flags are placed.
         font = pygame.font.SysFont(None, 36)
-        mines_text = font.render(f"Mines left: {self.mines_left()}", True, (0, 0, 0))
-        screen.blit(mines_text, (10, 10))
+        flags_text = font.render(f"Flag count: {self.flag_count()}", True, (0, 0, 0))
+        screen.blit(flags_text, (10, 10))
+
+        # Render how many mines there are total
+        mines_text = font.render(f"Mine count: {MINES}", True, (0, 0, 0))
+        screen.blit(mines_text, (10, 40))
 
     # Places mines on board.
     def addMines(self, safe_rc):
