@@ -73,6 +73,26 @@ def main():
 
     played_end  = False
     
+    # Reset / Play Again UI 
+    BTN_W, BTN_H = 100, 30
+    BTN_MARGIN = 10
+    # Button lives in the HUD (top bar)
+    reset_btn_rect = pygame.Rect(330, 40, BTN_W, BTN_H)
+
+
+    def draw_button(surface, rect, label):
+        pygame.draw.rect(surface, (235, 235, 235), rect)     
+        pygame.draw.rect(surface, (100, 100, 100), rect, 2)   
+        f = pygame.font.SysFont(None, 28)
+        txt = f.render(label, True, (0, 0, 0))
+        surface.blit(txt, txt.get_rect(center=rect.center))
+
+    def new_game():
+        nonlocal board, input_handler, played_end
+        board = Board(ROWS, COLS, mine_count)   
+        input_handler = InputHandler(board)
+        played_end = False
+
 
     # Status text of game.
     font = pygame.font.SysFont(None, 36)
@@ -88,6 +108,17 @@ def main():
             response = input_handler.handle_event(event)
             if response == "quit":
                 running = False
+             # --- Keyboard: R to reset ---
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                 new_game()
+
+             # --- Mouse: click Reset / Play Again button in HUD ---
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mx, my = event.pos
+                if my < GAME_STATE_OBJ_SIZE and reset_btn_rect.collidepoint(mx, my):
+                    new_game()
+                    continue  
 
             # Plays SFX after InputHandler updates the board
             if event.type == pygame.MOUSEBUTTONDOWN and not board.gameOver:
@@ -137,6 +168,10 @@ def main():
         else:
             text_rect = playing_text.get_rect(topright=(WIDTH - 10, 10))
             screen.blit(playing_text, text_rect)
+
+        # Draw Reset / Play Again button 
+        btn_label = "Play Again" if board.gameOver else "Reset (R)"
+        draw_button(screen, reset_btn_rect, btn_label)
 
         # Display.
         pygame.display.flip()
