@@ -12,13 +12,33 @@ from config import *
 from board import Board
 from inputHandler import InputHandler
 
+# function to get # mines from user
+def mine_input():
+    # loop
+    while True:
+        try:
+            # get user input
+            user_input = input("Enter the number of mines (10-20): ")
+            mine_count = int(user_input) # mine count is the int of the user input
+            # if mine count not 10 to 20, print
+            if mine_count < 10 or mine_count > 20:
+                print("Please enter a number between 10 and 20.")
+            # mine count 10-20
+            else:
+                return mine_count
+        # print exception
+        except ValueError:
+            print("Please enter a valid number.\n")
+
 # Main function.
 def main():
+    # get count of mines
+    mine_count = mine_input()
     # Sets up PyGame and the board.
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Minesweeper")
-    board = Board(ROWS, COLS)
+    board = Board(ROWS, COLS, mine_count)
     input_handler = InputHandler(board)
     # Status text of game.
     font = pygame.font.SysFont(None, 36)

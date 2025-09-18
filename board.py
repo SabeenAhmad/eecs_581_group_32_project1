@@ -15,9 +15,10 @@ import pygame
 
 # Class for handing the board.
 class Board:
-    def __init__(self, rows, cols):
+    def __init__(self, rows, cols, mine_count):
         self.rows = rows # number of rows
         self.cols = cols # number of cols
+        self.mine_count = mine_count # mine count
         self.gridSurface = pygame.Surface((WIDTH, HEIGHT - GAME_STATE_OBJ_SIZE)) # grid surface with PyGame
         self.grid = [[Cell(r, c, 0) for c in range(cols)] for r in range(rows)] # Fills grid with proper row and col count with '0' cell state.
         self.gameOver = False # bool to check if game over (mine clicked on grid)
@@ -26,7 +27,7 @@ class Board:
     # Calculate flag count by subtracting flags from mines
     def flag_count(self):
         flags = sum(cell.isFlagged for row in self.grid for cell in row)
-        return max(MINES - flags, 0)
+        return max(self.mine_count - flags, 0)
 
     # Draws the board.
     def draw(self, screen):
@@ -42,7 +43,7 @@ class Board:
         screen.blit(flags_text, (10, 10))
 
         # Render how many mines there are total
-        mines_text = font.render(f"Mine count: {MINES}", True, (0, 0, 0))
+        mines_text = font.render(f"Mine count: {self.mine_count}", True, (0, 0, 0))
         screen.blit(mines_text, (10, 40))
 
     # Places mines on board.
@@ -58,7 +59,7 @@ class Board:
                     safe_zone.add((nr, nc))
         # Randomly places mines until reaches mine count.
         placed = 0
-        while placed < MINES:
+        while placed < self.mine_count:
             r = random.randint(0, self.rows - 1)
             c = random.randint(0, self.cols - 1)
             # Passes if in safe zone.
