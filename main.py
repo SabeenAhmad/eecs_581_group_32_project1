@@ -61,11 +61,11 @@ def main():
             print(f"Sound not loaded: {path} -> {e}")
             return None
 
-    click_snd   = _load(_snd("click.wav"))
-    flag_snd    = _load(_snd("flag.wav"))
-    mine_snd    = _load(_snd("mine.wav"))
-    victory_snd = _load(_snd("victory.wav"))
-    lose_snd    = _load(_snd("lose.wav"))
+    click_snd   = _load(_snd("audio/click.wav"))
+    flag_snd    = _load(_snd("audio/flag.wav"))
+    mine_snd    = _load(_snd("audio/mine.wav"))
+    victory_snd = _load(_snd("audio/victory.wav"))
+    lose_snd    = _load(_snd("audio/lose.wav"))
 
     pygame.mixer.set_num_channels(24)      
     FLAG_CH = pygame.mixer.Channel(5)      
