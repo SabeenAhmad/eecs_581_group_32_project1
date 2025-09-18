@@ -1,8 +1,9 @@
 '''
-Author: 
-Date:
-Purpose:
-External Sources:
+File: config.py
+Authors: Jace Keagy, K Li, Ian Lim, Jenna Luong, Kit Magar, Bryce Martin.
+Date: 9/11/2025
+Purpose: Config file for Minesweeper containing colors and board information.
+External Sources: None.
 '''
 
 # Config
@@ -18,9 +19,11 @@ HEIGHT = ROWS * CELL_SIZE + GAME_STATE_OBJ_SIZE
 BG_COLOR = (220, 220, 220)
 GRID_COLOR = (180, 180, 180)
 TEXT_COLOR = (50, 50, 50)
-BOMB_COLOR = (255, 0, 0)
+REVEALED_BG = (200, 200, 200)
+BORDER_COLOR = (100, 100, 100)
+FLAG_COLOR = (220, 0, 0)
+MINE_COLOR = (0, 0, 0)
 
-# Updated by K Li on 2025-09-11
 # Added UI colors (numbers, revealed cells, flags, mines)
 NUMBER_COLORS = {
     1: (25, 118, 210),   # blue
@@ -32,8 +35,3 @@ NUMBER_COLORS = {
     7: (66, 66, 66),     # dark gray
     8: (33, 33, 33)      # black
 }
-
-REVEALED_BG = (200, 200, 200)
-BORDER_COLOR = (100, 100, 100)
-FLAG_COLOR = (220, 0, 0)
-MINE_COLOR = (0, 0, 0)

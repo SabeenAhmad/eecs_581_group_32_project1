@@ -1,49 +1,62 @@
 '''
-Author: Bryce Martin
-Date: 09-15-2025
-Purpose: Handle All User Inputs
-External Sources:
+File: inputHandler.py
+Authors: Jace Keagy, K Li, Ian Lim, Jenna Luong, Kit Magar, Bryce Martin.
+Date: 9/15/2025
+Purpose: Input handler for user clicks. Handles input for Minesweeper.
+External Sources: None.
 '''
 
+# Imports.
 import pygame
 from config import *
 
+# Handles input of user.
 class InputHandler:
     def __init__(self, board):
+        # References board and tracks if first cell clicked.
         self.board = board
         self.firstClick = True
 
+    # Handles each input event.
     def handle_event(self, event):
+        # Check if user exits.
         if event.type == pygame.QUIT:
             return "quit"
-        # check if mouse button pressed & game is not over
+        # Check if left mouse button pressed & game is not over.
         elif event.type == pygame.MOUSEBUTTONDOWN and not self.board.gameOver:
-            # x & y coordinates of mouse
+            # X & Y coordinates of mouse.
             mx, my = event.pos
+            # Adjustment for top bar.
             my_grid = my - GAME_STATE_OBJ_SIZE
             if my_grid < 0:
                 return
+            # Transistion to cell coordinates.
             row = my_grid // CELL_SIZE
             col = mx // CELL_SIZE
+            # Ignores out of bounds clicks.
             if not (0 <= row < ROWS and 0 <= col < COLS):
                 return
+            # Identifies cell.
             cell = self.board.grid[row][col]
+            # Uncover cell button.
             if event.button == 1:
+                # Makes sure cell isn't flagged and then mark as clicked.
                 if not cell.isFlagged:
-                    #If first clicked, mark as uncovered then add the mines.
+                    # If very first clicked cell: cell state to uncovered, add the mines, and reveal touching 0's.
                     if self.firstClick == True:
                         cell.cellState = 2
                         self.firstClick = False
                         self.board.insertMines((row,col))
                         cell.revealGrid(self.board.grid)
+                    # Reveal using flood-fill so zeros expand if not first.
                     else:
-                        # Updated by Kit — 2025-09-15: reveal using flood-fill so zeros expand
                         cell.revealGrid(self.board.grid)
                     cell.isClicked = True
-                    # if mine is clicked, game over
+                    # If mine is clicked, game over, reveal all mines.
                     if cell.cellState == 3:
                         self.board.gameOver = True
-                        self.board.revealMines() # updated by Jenna - reveal all mines once game is over
+                        self.board.revealMines()
+            # Right click toggles flag if cell not uncovered.
             elif event.button == 3:
                 if not cell.isClicked:
                     cell.isFlagged = not cell.isFlagged
