@@ -3,8 +3,7 @@
 ## Installation Requirements
 
 - Python 3.x
-- Pygame
-- Numpy  
+- Pygame  
 - (Optional) Virtual environment for dependency management
 
 ## Usage
