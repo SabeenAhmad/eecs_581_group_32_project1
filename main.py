@@ -3,6 +3,8 @@ File: main.py
 Authors: Jace Keagy, K Li, Ian Lim, Jenna Luong, Kit Magar, Bryce Martin.
 Date: 9/10/2025
 Purpose: The Entry Point and Game Loop.
+Inputs: click.wav, flag.wav, mine.wav, victory.wav, and lose.wav.
+Outputs: None.
 External Sources: None.
 '''
 
