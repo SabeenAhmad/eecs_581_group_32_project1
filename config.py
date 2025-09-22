@@ -3,6 +3,8 @@ File: config.py
 Authors: Jace Keagy, K Li, Ian Lim, Jenna Luong, Kit Magar, Bryce Martin.
 Date: 9/11/2025
 Purpose: Config file for Minesweeper containing colors and board information.
+Inputs: None.
+Outputs: None.
 External Sources: None.
 '''
 
