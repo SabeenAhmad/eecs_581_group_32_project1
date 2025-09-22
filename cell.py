@@ -3,6 +3,8 @@ File: cell.py
 Authors: Jace Keagy, K Li, Ian Lim, Jenna Luong, Kit Magar, Bryce Martin.
 Date: 9/11/2025
 Purpose: Cell class with cell states and rendering logic for Minesweeper.
+Inputs: None.
+Outputs: None.
 External Sources: None.
 '''
 
