@@ -3,6 +3,8 @@ File: inputHandler.py
 Authors: Jace Keagy, K Li, Ian Lim, Jenna Luong, Kit Magar, Bryce Martin.
 Date: 9/15/2025
 Purpose: Input handler for user clicks. Handles input for Minesweeper.
+Inputs: None.
+Outputs: None.
 External Sources: None.
 '''
 
