@@ -4,6 +4,8 @@ Authors: Jace Keagy, K Li, Ian Lim, Jenna Luong, Kit Magar, Bryce Martin.
 Date: 9/10/25
 Purpose: Create & manage 2D grid, insert mines, compute adjacent mines, 
 calculates mines left, check if victory.
+Inputs: None.
+Outputs: None.
 External Sources: None.
 '''
 
