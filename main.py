@@ -139,9 +139,9 @@ def main():
                 if easy_btn.collidepoint(mx, my):
                     ai = AI(board, "easy")
                 elif medium_btn.collidepoint(mx, my):
-                    ai = MinesweeperAI(board, "medium")
+                    ai = AI(board, "medium")
                 elif hard_btn.collidepoint(mx, my):
-                    ai = MinesweeperAI(board, "hard")
+                    ai = AI(board, "hard")
 
                 ai.make_move()
 
