@@ -14,6 +14,7 @@ import pygame
 from config import *
 from board import Board
 from inputHandler import InputHandler
+from ai import AI
 
 # function to get # mines from user
 def mine_input():
@@ -79,11 +80,14 @@ def main():
     FLAG_CH = pygame.mixer.Channel(5) # dedicated channel for flag sounds
     last_flag_ms = 0 # timestamp for flag sound cooldown
     played_end  = False # flag to track if game ended
-    
+    show_ai_popup = False #flag for showing ai mode
     # Reset / Play Again UI 
     BTN_W, BTN_H = 100, 30
     # Button lives in the HUD (top bar)
-    reset_btn_rect = pygame.Rect(330, 40, BTN_W, BTN_H)
+    reset_btn_rect = pygame.Rect(430, 40, BTN_W, BTN_H)
+
+    #UI Button 
+    AI_btn = pygame.Rect(10, 540, BTN_W, BTN_H)
 
     # func to draw button
     def draw_button(surface, rect, label):
@@ -127,6 +131,19 @@ def main():
                 if my < GAME_STATE_OBJ_SIZE and reset_btn_rect.collidepoint(mx, my):
                     new_game()
                     continue  
+                # if AI button is clicked
+                if AI_btn.collidepoint(mx, my):
+                    show_ai_popup = not show_ai_popup  # toggle popup on/off
+                    continue
+                # If popup is visible, check difficulty buttons
+                if easy_btn.collidepoint(mx, my):
+                    ai = AI(board, "easy")
+                elif medium_btn.collidepoint(mx, my):
+                    ai = MinesweeperAI(board, "medium")
+                elif hard_btn.collidepoint(mx, my):
+                    ai = MinesweeperAI(board, "hard")
+
+                ai.make_move()
 
             # Plays SFX after InputHandler updates the board
             if event.type == pygame.MOUSEBUTTONDOWN and not board.gameOver:
@@ -202,6 +219,35 @@ def main():
         btn_label = "Play Again" if board.gameOver else "Reset (R)"
         draw_button(screen, reset_btn_rect, btn_label)
 
+        # Draw AI Button
+        draw_button(screen, AI_btn, "AI Help")
+
+        # Draw popup at bottom if enabled
+        if show_ai_popup:
+            popup_w, popup_h = 360, 100  
+            popup_x = 20
+            popup_y = HEIGHT - popup_h - 20  
+            popup_rect = pygame.Rect(popup_x, popup_y, popup_w, popup_h)
+
+            pygame.draw.rect(screen, (240, 240, 240), popup_rect)
+            pygame.draw.rect(screen, (0, 0, 0), popup_rect, 2)
+
+            # Button dimensions
+            btn_w, btn_h = 100, 40
+            btn_spacing = 20
+            total_width = 3 * btn_w + 2 * btn_spacing
+
+            # Center buttons inside popup
+            start_x = popup_rect.centerx - total_width // 2
+            start_y = popup_rect.centery - btn_h // 2
+            easy_btn   = pygame.Rect(start_x, start_y, btn_w, btn_h)
+            medium_btn = pygame.Rect(start_x + btn_w + btn_spacing, start_y, btn_w, btn_h)
+            hard_btn   = pygame.Rect(start_x + 2 * (btn_w + btn_spacing), start_y, btn_w, btn_h)
+
+            draw_button(screen, easy_btn, "Easy")
+            draw_button(screen, medium_btn, "Medium")
+            draw_button(screen, hard_btn, "Hard")
+            
         # Display.
         pygame.display.flip()
     pygame.quit()
