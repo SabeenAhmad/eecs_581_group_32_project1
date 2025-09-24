@@ -56,7 +56,11 @@ class Board:
         # Render labels for rows
         for r in range(self.rows):
             rowLabel = font.render(str(r + 1), True, TEXT_COLOR)
-            screen.blit(rowLabel , (WIDTH-COL_LABEL_SIZE + 10, GAME_STATE_OBJ_SIZE + (r * CELL_SIZE)+10 ))
+            grid_right_edge = COLS * CELL_SIZE   # end of grid
+            label_x = grid_right_edge + 10       # row numbers appear right after grid
+            label_y = GAME_STATE_OBJ_SIZE + (r * CELL_SIZE) + 10
+            screen.blit(rowLabel, (label_x, label_y))
+
 
     # Places mines on board.
     def addMines(self, safe_rc):
