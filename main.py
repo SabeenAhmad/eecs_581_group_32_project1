@@ -38,12 +38,33 @@ def mine_input():
 def main():
     # get count of mines
     mine_count = mine_input()
+    ai_mode = input("Do you want to enable AI mode? (y/n): ").strip().lower()
+    if ai_mode == 'y':
+        difficulty = input("Select AI difficulty (easy, medium, hard): ").strip().lower()
+        if difficulty in ["easy", "medium", "hard"]:
+            print(f"AI mode enabled with {difficulty} difficulty.")
+        else:
+            print("Invalid difficulty. AI mode disabled.")
+    else:
+        print("AI mode disabled.")
     # Sets up PyGame and the board.
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Minesweeper")
     board = Board(ROWS, COLS, mine_count)
     input_handler = InputHandler(board)
+    # AI state for scheduled moves
+    ai = None
+    ai_pending = None
+    ai_waiting = False
+    ai_wait_start = 0
+    ai_wait_duration = 1000  #1 second
+    # track who made the last move: 'human' or 'ai' (used for end-of-game messaging)
+    last_mover = None
+
+    # If user opted into AI mode at startup, create AI instance now
+    if ai_mode == 'y' and difficulty in ["easy", "medium", "hard"]:
+        ai = AI(board, difficulty)
 
     # Sound
     try:
@@ -80,14 +101,13 @@ def main():
     FLAG_CH = pygame.mixer.Channel(5) # dedicated channel for flag sounds
     last_flag_ms = 0 # timestamp for flag sound cooldown
     played_end  = False # flag to track if game ended
-    show_ai_popup = False #flag for showing ai mode
     # Reset / Play Again UI 
     BTN_W, BTN_H = 100, 30
     # Button lives in the HUD (top bar)
     reset_btn_rect = pygame.Rect(430, 40, BTN_W, BTN_H)
 
     #UI Button 
-    AI_btn = pygame.Rect(10, 540, BTN_W, BTN_H)
+    # (AI popup/button removed; AI enabled via startup prompt)
 
     # func to draw button
     def draw_button(surface, rect, label):
@@ -99,10 +119,20 @@ def main():
 
     # func to start a new game
     def new_game():
-        nonlocal board, input_handler, played_end # access variables from outer scope
-        board = Board(ROWS, COLS, mine_count) # create new game board
-        input_handler = InputHandler(board) # create new input handler for the board
-        played_end = False # reset end-game sound flag
+        nonlocal board, input_handler, played_end, ai, ai_pending, ai_waiting, last_mover
+        # recreate board and handler
+        board = Board(ROWS, COLS, mine_count)
+        input_handler = InputHandler(board)
+        played_end = False
+        # reset any scheduled AI state
+        ai_pending = None
+        ai_waiting = False
+        last_mover = None
+        # if AI mode was enabled at startup, recreate AI tied to the new board
+        if ai_mode == 'y' and difficulty in ["easy", "medium", "hard"]:
+            ai = AI(board, difficulty)
+        else:
+            ai = None
 
 
     # Status text of game.
@@ -116,34 +146,43 @@ def main():
     while running:
         # Handles user input and checks if quit.
         for event in pygame.event.get():
+            # Always allow quitting and reset key even while AI is thinking
+            if event.type == pygame.QUIT:
+                running = False
+                break
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                new_game()
+                continue
+
+            # Block mouse clicks while AI is thinking
+            if ai_waiting and event.type == pygame.MOUSEBUTTONDOWN:
+                # still allow quitting and reset (handled above); otherwise ignore input
+                continue
+
+            # Let InputHandler handle the event (includes left-click reveal / right-click flag)
             response = input_handler.handle_event(event)
             if response == "quit":
-                running = False # exit loop if quitting
-             # --- Keyboard: R to reset ---
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:
-                 new_game() # resets game
+                running = False
+                break
+            # If a human revealed a cell, schedule AI to move (if AI is enabled)
+            if response == "revealed":
+                # human made a reveal
+                last_mover = 'human'
+                # schedule AI only if AI is enabled
+                if ai is not None and not board.gameOver:
+                    ai_pending = ai.make_move()
+                    if ai_pending and ai_pending[0] != "none":
+                        ai_waiting = True
+                        ai_wait_start = pygame.time.get_ticks()
 
-             # --- Mouse: click Reset / Play Again button in HUD ---
+            # --- Mouse: click Reset / Play Again button in HUD ---
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mx, my = event.pos
                 # start new game if left-click on reset button in HUD (top area)
                 if my < GAME_STATE_OBJ_SIZE and reset_btn_rect.collidepoint(mx, my):
                     new_game()
                     continue  
-                # if AI button is clicked
-                if AI_btn.collidepoint(mx, my):
-                    show_ai_popup = not show_ai_popup  # toggle popup on/off
-                    continue
-                # If popup is visible, check difficulty buttons
-                if easy_btn.collidepoint(mx, my):
-                    ai = AI(board, "easy")
-                elif medium_btn.collidepoint(mx, my):
-                    ai = AI(board, "medium")
-                elif hard_btn.collidepoint(mx, my):
-                    ai = AI(board, "hard")
-
-                ai.make_move()
+                # AI popup/button removed — AI controlled via startup prompt
 
             # Plays SFX after InputHandler updates the board
             if event.type == pygame.MOUSEBUTTONDOWN and not board.gameOver:
@@ -180,6 +219,19 @@ def main():
                                 FLAG_CH.play(flag_snd) # play flag sound
                                 last_flag_ms = now # update last flag sound timestamp
 
+        # If AI is waiting and duration elapsed, perform AI move
+        if ai_waiting and ai_pending and not board.gameOver:
+            now = pygame.time.get_ticks()
+            if now - ai_wait_start >= ai_wait_duration:
+                action, rc = ai_pending
+                if action == "reveal" and rc is not None:
+                    r, c = rc
+                    # AI is about to act
+                    last_mover = 'ai'
+                    input_handler.reveal_cell(r, c)
+                ai_pending = None
+                ai_waiting = False
+
         # fill screen with bg color
         screen.fill(BG_COLOR)
         # draw screen
@@ -188,66 +240,57 @@ def main():
         # Checks if win, loss, or playing and blits the text.
         board.victoryCheck()
 
-        # End of game sound effects
-        # if player won & end sound hasn't played
+        # AI thinking indicator (red) while waiting - bottom center
+        if ai_waiting:
+            f_small = pygame.font.SysFont(None, 28)
+            txt = f_small.render("AI thinking...", True, (200, 0, 0))
+            tw, th = txt.get_size()
+            x = (WIDTH - tw) // 2
+            y = HEIGHT - th - 20
+            screen.blit(txt, (x, y))
+
+        # End of game sound effects and messages
         if board.victory and not played_end:
-            # play victory sound
-            if victory_snd: victory_snd.play()
-            played_end = True # mark end sound as played
-        # if player lost
+            # Someone won. If last mover was AI, say AI won; otherwise user won.
+            if last_mover == 'ai':
+                # AI won
+                if lose_snd: lose_snd.play()
+            else:
+                # human won
+                if victory_snd: victory_snd.play()
+            played_end = True
         elif board.gameOver and not board.victory and not played_end:
-            # play lose sound
-            if lose_snd: lose_snd.play()
+            # Game over due to a mine. If AI caused the gameOver, the human wins; if human caused it, human loses.
+            if last_mover == 'ai':
+                # AI clicked a mine -> human wins
+                if victory_snd: victory_snd.play()
+            else:
+                # human clicked a mine -> human loses
+                if lose_snd: lose_snd.play()
             played_end = True
 
-        # if game over and player won display game status in top-right corner
-        if board.gameOver == True and board.victory == True:
-            text_rect = win_text.get_rect(topright=(WIDTH - 10, 10))
-            screen.blit(win_text, text_rect) # win text
-        
-        # if game over and player lost display game status in top-right corner
-        elif board.gameOver == True and board.victory != True:
-            text_rect = lose_text.get_rect(topright=(WIDTH - 10, 10))
-            screen.blit(lose_text, text_rect) # lose text
-
-        # game still in progress display game status in top-right corner
+        # End-game UI messaging (top-right)
+        if board.victory:
+            if last_mover == 'ai':
+                txt = font.render("AI won!", True, (0, 0, 0))
+            else:
+                txt = font.render("You Win!", True, (0, 0, 0))
+            screen.blit(txt, txt.get_rect(topright=(WIDTH - 10, 10)))
+        elif board.gameOver and not board.victory:
+            # If AI triggered the mine, that's a human win; otherwise human lose
+            if last_mover == 'ai':
+                txt = font.render("You Win!", True, (0, 0, 0))
+            else:
+                txt = font.render("You Lose!", True, (0, 0, 0))
+            screen.blit(txt, txt.get_rect(topright=(WIDTH - 10, 10)))
         else:
-            text_rect = playing_text.get_rect(topright=(WIDTH - 10, 10))
-            screen.blit(playing_text, text_rect) # playing text
+            screen.blit(playing_text, playing_text.get_rect(topright=(WIDTH - 10, 10)))
 
         # Draw Reset / Play Again button 
         btn_label = "Play Again" if board.gameOver else "Reset (R)"
         draw_button(screen, reset_btn_rect, btn_label)
 
-        # Draw AI Button
-        draw_button(screen, AI_btn, "AI Help")
-
-        # Draw popup at bottom if enabled
-        if show_ai_popup:
-            popup_w, popup_h = 360, 100  
-            popup_x = 20
-            popup_y = HEIGHT - popup_h - 20  
-            popup_rect = pygame.Rect(popup_x, popup_y, popup_w, popup_h)
-
-            pygame.draw.rect(screen, (240, 240, 240), popup_rect)
-            pygame.draw.rect(screen, (0, 0, 0), popup_rect, 2)
-
-            # Button dimensions
-            btn_w, btn_h = 100, 40
-            btn_spacing = 20
-            total_width = 3 * btn_w + 2 * btn_spacing
-
-            # Center buttons inside popup
-            start_x = popup_rect.centerx - total_width // 2
-            start_y = popup_rect.centery - btn_h // 2
-            easy_btn   = pygame.Rect(start_x, start_y, btn_w, btn_h)
-            medium_btn = pygame.Rect(start_x + btn_w + btn_spacing, start_y, btn_w, btn_h)
-            hard_btn   = pygame.Rect(start_x + 2 * (btn_w + btn_spacing), start_y, btn_w, btn_h)
-
-            draw_button(screen, easy_btn, "Easy")
-            draw_button(screen, medium_btn, "Medium")
-            draw_button(screen, hard_btn, "Hard")
-            
+        # AI UI removed (AI enabled through startup prompt)
         # Display.
         pygame.display.flip()
     pygame.quit()

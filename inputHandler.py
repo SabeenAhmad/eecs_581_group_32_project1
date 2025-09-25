@@ -19,6 +19,29 @@ class InputHandler:
         self.board = board
         self.firstClick = True
 
+    def reveal_cell(self, row, col):
+        """Centralized reveal logic used by both human input and AI decisions.
+        """
+        # bounds check
+        if not (0 <= row < ROWS and 0 <= col < COLS):
+            return False
+        cell = self.board.grid[row][col]
+        if cell.isFlagged or cell.isClicked:
+            return False
+        # First click flow: place mines safely around (row,col)
+        if self.firstClick:
+            cell.cellState = 2
+            self.firstClick = False
+            self.board.insertMines((row, col))
+            cell.revealGrid(self.board.grid)
+        else:
+            cell.revealGrid(self.board.grid)
+        cell.isClicked = True
+        if cell.cellState == 3:
+            self.board.gameOver = True
+            self.board.revealMines()
+        return True
+
     # Handles each input event.
     def handle_event(self, event):
         # Check if user exits.
@@ -44,20 +67,10 @@ class InputHandler:
             if event.button == 1:
                 # Makes sure cell isn't flagged and then mark as clicked.
                 if not cell.isFlagged:
-                    # If very first clicked cell: cell state to uncovered, add the mines, and reveal touching 0's.
-                    if self.firstClick == True:
-                        cell.cellState = 2
-                        self.firstClick = False
-                        self.board.insertMines((row,col))
-                        cell.revealGrid(self.board.grid)
-                    # Reveal using flood-fill so zeros expand if not first.
-                    else:
-                        cell.revealGrid(self.board.grid)
-                    cell.isClicked = True
-                    # If mine is clicked, game over, reveal all mines.
-                    if cell.cellState == 3:
-                        self.board.gameOver = True
-                        self.board.revealMines()
+                    # Delegate to centralized reveal logic
+                    revealed = self.reveal_cell(row, col)
+                    if revealed:
+                        return "revealed"
             # Right click toggles flag if cell not uncovered.
             elif event.button == 3:
                 if not cell.isClicked:
