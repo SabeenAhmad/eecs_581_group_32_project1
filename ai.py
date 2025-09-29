@@ -19,13 +19,19 @@ class AI:
         return ("none", None)
 
     def _easy_move(self):
-        print("[AI Easy] Random move placeholder")
+        # Easy: pick the first covered, unflagged cell
+        for r in range(self.board.rows):
+            for c in range(self.board.cols):
+                cell = self.board.grid[r][c]
+                if not cell.isClicked and not cell.isFlagged:
+                    return ("reveal", (r, c))
+        return ("none", None)
 
     def _medium_move(self):
         print("[AI Medium] Random move placeholder")
 
     def _hard_move(self):
-        # Cheating: pick a covered cell that isn't a mine
+        # Hard: pick a covered cell that isn't a mine
         for r in range(self.board.rows):
             for c in range(self.board.cols):
                 cell = self.board.grid[r][c]
