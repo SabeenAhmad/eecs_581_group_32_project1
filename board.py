@@ -50,13 +50,13 @@ class Board:
 
         # Render the elapsed game time
         # Anna needs to add timer logic so we can add a variable to the following line of code to get time to actually appear.
-        game_time_text = font.render(f"Game time: ", True, (0, 0, 0))
-        screen.blit(game_time_text, (10, 510))
+        # game_time_text = font.render(f"Game time: ", True, (0, 0, 0))
+        # screen.blit(game_time_text, (10, 510))
 
         # Render the high score (longest elapsed game time)
         # Sriya needs to ask for player name in main.py
-        high_score_text = font.render(f"High score: (Achieved by {self.player_name})" , True, (0, 0, 0))
-        screen.blit(high_score_text, (10, 540))
+        # high_score_text = font.render(f"High score: (Achieved by {self.player_name})" , True, (0, 0, 0))
+        # screen.blit(high_score_text, (10, 540))
 
         # Render labels for columns
         for c in range(self.cols):
