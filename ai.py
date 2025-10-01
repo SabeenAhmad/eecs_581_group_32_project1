@@ -35,9 +35,56 @@ class AI:
 
         # Pick a random candidate
         return ("reveal", random.choice(candidates))
-
+    
     def _medium_move(self):
-        print("[AI Medium] Random move placeholder")
+        # Check if any zero-mine cells have been revealed to trigger strategic mode
+        has_zero_revealed = any(
+            cell.isClicked and cell.adjMines == 0 
+            for row in self.board.grid for cell in row
+        )
+        
+        # If zero-mine cell revealed, use logical deduction
+        if has_zero_revealed:
+            safe_move = self._find_safe_move()
+            if safe_move:
+                return ("reveal", safe_move)
+        
+        # Make random moves initially or fall back to random
+        candidates = []
+        for r in range(self.board.rows):
+            for c in range(self.board.cols):
+                cell = self.board.grid[r][c]
+                if not cell.isClicked and not cell.isFlagged:
+                    candidates.append((r, c))
+        
+        if candidates:
+            return ("reveal", random.choice(candidates))
+        return ("none", None)
+
+    def _find_safe_move(self):
+        for r in range(self.board.rows):
+            for c in range(self.board.cols):
+                cell = self.board.grid[r][c]
+                if cell.isClicked and cell.adjMines > 0:
+                    neighbors = self._get_neighbors(r, c)
+                    covered = [pos for pos in neighbors if not self.board.grid[pos[0]][pos[1]].isClicked and not self.board.grid[pos[0]][pos[1]].isFlagged]
+                    flagged = [pos for pos in neighbors if self.board.grid[pos[0]][pos[1]].isFlagged]
+                    
+                    if len(flagged) == cell.adjMines and covered:
+                        return covered[0]
+        return None
+
+    def _get_neighbors(self, r, c):
+        neighbors = []
+        for dr in (-1, 0, 1):
+            for dc in (-1, 0, 1):
+                if dr == 0 and dc == 0:
+                    continue
+                nr, nc = r + dr, c + dc
+                if 0 <= nr < self.board.rows and 0 <= nc < self.board.cols:
+                    neighbors.append((nr, nc))
+        return neighbors
+
 
     def _hard_move(self):
         # Hard: pick a random covered cell that isn't a mine 
