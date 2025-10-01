@@ -16,6 +16,39 @@ from board import Board
 from inputHandler import InputHandler
 from ai import AI
 
+base_dir = os.path.dirname(os.path.abspath(__file__))  # get directory of current script
+HIGHSCORES_FILE = os.path.join(base_dir, "highscores.txt")  # file to track high scores
+# --- High score file helpers ---
+def load_best_high_score(path):
+    """Return (best_seconds, name) or (None, None) if none."""
+    best = None
+    holder = None
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                # format: seconds,name
+                parts = line.split(",", 1)
+                if len(parts) != 2:
+                    continue
+                try:
+                    secs = float(parts[0])
+                except ValueError:
+                    continue
+                name = parts[1].strip()
+                if secs >= 0 and (best is None or secs < best):
+                    best, holder = secs, name
+    return best, holder
+
+def append_high_score(path, name, seconds):
+    """Append a single score line: seconds,name"""
+    # Make sure folder exists if you ever move highscores into a subfolder
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(f"{seconds:.3f},{name}\n")
+    print(f"[HS] wrote {seconds:.3f},{name} -> {path}")
+
 # function to get # mines from user
 def mine_input():
     # loop
@@ -34,8 +67,19 @@ def mine_input():
         except ValueError:
             print("Please enter a valid number.\n")
 
+def player_name_input():
+    while True:
+        name = input("Enter your name (1–20 chars): ").strip()
+        if 1 <= len(name) <= 20:
+            # keep only basic characters to avoid weird font issues
+            safe = "".join(ch for ch in name if ch.isalnum() or ch in " _-")
+            return safe
+        print("Please enter a non-empty name up to 20 characters.")
+
+
 # Main function.
 def main():
+    player_name = player_name_input() #ask for player name
     # get count of mines
     mine_count = mine_input()
     ai_mode = input("Do you want to enable AI mode? (y/n): ").strip().lower()
@@ -52,6 +96,13 @@ def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Minesweeper")
     board = Board(ROWS, COLS, mine_count, difficulty)
+    board.set_player_name(player_name)
+    # Load best score from file on startup
+    best, holder = load_best_high_score(HIGHSCORES_FILE)
+    if best is not None:
+        board.best_time_seconds = best
+        board.best_time_holder = holder
+
     input_handler = InputHandler(board)
     # AI state for scheduled moves
     ai = None
@@ -75,7 +126,9 @@ def main():
     except Exception as e:
         print("Mixer init failed:", e)
 
-    base_dir = os.path.dirname(os.path.abspath(__file__)) # get directory of current script
+    
+
+
 
     # helper func to build full paths to sound files
     def _snd(name):
@@ -116,12 +169,36 @@ def main():
         f = pygame.font.SysFont(None, 28) # create a font object w default font at size 28
         txt = f.render(label, True, (0, 0, 0)) # label text is black
         surface.blit(txt, txt.get_rect(center=rect.center)) # draw text centered within button rectangle
+    def _record_high_score():
+        # Use the real timer value (set elsewhere); if missing, do nothing
+        elapsed_time = getattr(board, "elapsed_time_seconds", None)
+        if elapsed_time is None:
+            print("[HS] elapsed_time not set; skipping high-score write")
+            return
+
+        append_high_score(HIGHSCORES_FILE, board.player_name, elapsed_time)
+        best, holder = load_best_high_score(HIGHSCORES_FILE)
+        if best is not None:
+            board.best_time_seconds = best
+            board.best_time_holder = holder
+        board.update_high_score(board.player_name, elapsed_time)
+
 
     # func to start a new game
     def new_game():
         nonlocal board, input_handler, played_end, ai, ai_pending, ai_waiting, last_mover
         # recreate board and handler
         board = Board(ROWS, COLS, mine_count, difficulty)
+        board.set_player_name(player_name)
+        # Load best score from file after reset so it still shows
+        best, holder = load_best_high_score(HIGHSCORES_FILE)
+        if best is not None:
+            board.best_time_seconds = best
+            board.best_time_holder = holder
+            print(f"[HS] loaded best {best:.3f} by {holder}")  # DEBUG
+        else:
+            print("[HS] no best score yet")
+
         input_handler = InputHandler(board)
         played_end = False
         # reset any scheduled AI state
@@ -250,22 +327,26 @@ def main():
             screen.blit(txt, (x, y))
 
         # End of game sound effects and messages
+        # End of game sound effects and messages
         if board.victory and not played_end:
-            # Someone won. If last mover was AI, say AI won; otherwise user won.
+            # Board fully cleared
             if last_mover == 'ai':
-                # AI won
+                # AI solved it -> AI wins
                 if lose_snd: lose_snd.play()
             else:
-                # human won
+                # Human cleared the board -> human wins
                 if victory_snd: victory_snd.play()
+                _record_high_score()
             played_end = True
+
         elif board.gameOver and not board.victory and not played_end:
-            # Game over due to a mine. If AI caused the gameOver, the human wins; if human caused it, human loses.
+            # A mine was clicked; if AI clicked it, that's a human win
             if last_mover == 'ai':
                 # AI clicked a mine -> human wins
                 if victory_snd: victory_snd.play()
+                _record_high_score()
             else:
-                # human clicked a mine -> human loses
+                # Human clicked a mine -> human loses
                 if lose_snd: lose_snd.play()
             played_end = True
 
