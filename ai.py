@@ -1,3 +1,4 @@
+import random
 class AI:
     """Pure decision-making AI. It does NOT change game state; it only returns a recommended
     action for the caller to apply. This keeps game-state changes centralized in InputHandler.
@@ -19,13 +20,20 @@ class AI:
         return ("none", None)
 
     def _easy_move(self):
-        # Easy: pick the first covered, unflagged cell
+        # Collect all covered, unflagged cells
+        candidates = []
         for r in range(self.board.rows):
             for c in range(self.board.cols):
                 cell = self.board.grid[r][c]
                 if not cell.isClicked and not cell.isFlagged:
-                    return ("reveal", (r, c))
-        return ("none", None)
+                    candidates.append((r, c))
+
+        # If no candidates, do nothing
+        if not candidates:
+            return ("none", None)
+
+        # Pick a random candidate
+        return ("reveal", random.choice(candidates))
 
     def _medium_move(self):
         print("[AI Medium] Random move placeholder")
