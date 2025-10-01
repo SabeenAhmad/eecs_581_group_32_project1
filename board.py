@@ -25,11 +25,23 @@ class Board:
         self.grid = [[Cell(r, c, 0) for c in range(cols)] for r in range(rows)] # Fills grid with proper row and col count with '0' cell state.
         self.gameOver = False # bool to check if game over (mine clicked on grid)
         self.victory = False # bool to check if won
-    
+        self.player_name = "Player"
+        self.best_time_seconds = None     #filled later by timer logic
+        self.best_time_holder = None      #name tied to best time
+
+    def set_player_name(self, name: str):
+        self.player_name = name if name else "Player"
+
     # Calculate flag count by subtracting flags from mines
     def flag_count(self):
         flags = sum(cell.isFlagged for row in self.grid for cell in row)
         return max(self.mine_count - flags, 0)
+    def update_high_score(self, player_name, elapsed_time):
+        if elapsed_time is None:
+            return
+        if self.best_time_seconds is None or elapsed_time < self.best_time_seconds:
+            self.best_time_seconds = elapsed_time
+            self.best_time_holder = player_name
 
     # Draws the board.
     def draw(self, screen):
@@ -70,6 +82,30 @@ class Board:
             label_x = grid_right_edge + 10       # row numbers appear right after grid
             label_y = GAME_STATE_OBJ_SIZE + (r * CELL_SIZE) + 10
             screen.blit(rowLabel, (label_x, label_y))
+
+        #player & future timer/highscore
+        footer_font = pygame.font.SysFont(None, 28)
+        # --- Footer: one-line status ---
+        footer_y = HEIGHT - EXTRA_HEIGHT + 10
+
+        # Build labels
+        timer_label = "--"  # replace later with real timer
+        hs_label = "--"
+        if self.best_time_seconds is not None and self.best_time_holder:
+            m, s = divmod(int(self.best_time_seconds), 60)
+            hs_label = f"{m:02d}:{s:02d} by {self.best_time_holder}"
+
+        line = f"Player: {self.player_name}   Time: {timer_label}   High score: {hs_label}"
+
+        # Fit-to-width: try smaller fonts if needed
+        for size in (28, 24, 20, 18):
+            footer_font = pygame.font.SysFont(None, size)
+            line_surf = footer_font.render(line, True, (0, 0, 0))
+            if line_surf.get_width() <= WIDTH - 20:
+                break
+
+        screen.blit(line_surf, (10, footer_y))
+
 
     # Places mines on board.
     def addMines(self, safe_rc):
