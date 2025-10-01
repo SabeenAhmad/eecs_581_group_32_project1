@@ -51,7 +51,7 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Minesweeper")
-    board = Board(ROWS, COLS, mine_count)
+    board = Board(ROWS, COLS, mine_count, difficulty)
     input_handler = InputHandler(board)
     # AI state for scheduled moves
     ai = None
@@ -121,7 +121,7 @@ def main():
     def new_game():
         nonlocal board, input_handler, played_end, ai, ai_pending, ai_waiting, last_mover
         # recreate board and handler
-        board = Board(ROWS, COLS, mine_count)
+        board = Board(ROWS, COLS, mine_count, difficulty)
         input_handler = InputHandler(board)
         played_end = False
         # reset any scheduled AI state
