@@ -17,11 +17,12 @@ import pygame
 
 # Class for handing the board.
 class Board:
-    def __init__(self, rows, cols, mine_count, difficulty):
+    def __init__(self, rows, cols, mine_count, ai_mode, difficulty):
         self.rows = rows # number of rows
         self.cols = cols # number of cols
         self.mine_count = mine_count # mine count
         self.difficulty = difficulty
+        self.ai_mode = ai_mode
         self.GRID_TOP_MARGIN = 50   # space in pixels for text/UI above grid
         self.gridSurface = pygame.Surface((WIDTH, HEIGHT - GAME_STATE_OBJ_SIZE)) # grid surface with PyGame
         self.grid = [[Cell(r, c, 0) for c in range(cols)] for r in range(rows)] # Fills grid with proper row and col count with '0' cell state.
@@ -51,7 +52,11 @@ class Board:
         screen.blit(mines_text, (10, 40))
 
         # Render how the AI difficulty
-        mines_text = font.render(f"AI difficulty: {self.difficulty}", True, (0, 0, 0))
+        if self.ai_mode == "y":     
+            if self.difficulty in ["easy", "medium", "hard"]:
+                mines_text = font.render(f"AI difficulty: {self.difficulty}", True, (0, 0, 0))        
+        else:
+            mines_text = font.render(f"AI mode disabled", True, (0, 0, 0))  
         screen.blit(mines_text, (10, 70))
 
         # Render the elapsed game time
@@ -62,7 +67,7 @@ class Board:
         # Render the high score (longest elapsed game time)
         # Sriya needs to ask for player name in main.py
         # high_score_text = font.render(f"High score: (Achieved by: {self.player_name})" , True, (0, 0, 0))
-        #screen.blit(high_score_text, (10, 590))
+        # screen.blit(high_score_text, (10, 590))
 
         # Render labels for columns
         for c in range(self.cols):
