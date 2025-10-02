@@ -84,13 +84,13 @@ class Board:
         # --- Footer: one-line status ---
         footer_y = HEIGHT - EXTRA_HEIGHT + 10
 
-        # Build labels
-        hs_label = "--"
+        # Initial high score label
+        hs_label = "No high scores recorded"
         if self.best_time_seconds and self.best_time_holder:
             m, s = divmod(int(self.best_time_seconds), 60)
-            hs_label = f"{m:02d}:{s:02d} by {self.best_time_holder}"
+            hs_label = f"{self.difficulty} - {m:02d}:{s:02d} by {self.best_time_holder}"
 
-        line = f"Player: {self.player_name} High score: {hs_label}"
+        line = f"High score: {hs_label}"
 
         # Fit-to-width: try smaller fonts if needed
         for size in (28, 24, 20, 18):
@@ -190,3 +190,5 @@ class Board:
         if self.start_time is not None:
             self.elapsed_time_seconds = time.time() - self.start_time # total timer
             self.start_time = None  
+
+    
