@@ -190,7 +190,7 @@ def main():
         nonlocal board, input_handler, played_end, ai, ai_pending, ai_waiting, last_mover
         # recreate board and handler
         board = Board(ROWS, COLS, mine_count, ai_mode, difficulty)
-        board = Board(ROWS, COLS, mine_count, difficulty)
+        # board = Board(ROWS, COLS, mine_count, difficulty)
         board.set_player_name(player_name)
         # Load best score from file after reset so it still shows
         best, holder = load_best_high_score(HIGHSCORES_FILE)

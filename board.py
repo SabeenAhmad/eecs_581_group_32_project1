@@ -23,7 +23,6 @@ class Board:
         self.mine_count = mine_count # mine count
         self.difficulty = difficulty
         self.ai_mode = ai_mode
-        self.GRID_TOP_MARGIN = 50   # space in pixels for text/UI above grid
         self.gridSurface = pygame.Surface((WIDTH, HEIGHT - GAME_STATE_OBJ_SIZE)) # grid surface with PyGame
         self.grid = [[Cell(r, c, 0) for c in range(cols)] for r in range(rows)] # Fills grid with proper row and col count with '0' cell state.
         self.gameOver = False # bool to check if game over (mine clicked on grid)
@@ -53,7 +52,7 @@ class Board:
         for row in self.grid:
             for cell in row:
                 cell.draw(self.gridSurface)
-        screen.blit(self.gridSurface, (0, GAME_STATE_OBJ_SIZE + self.GRID_TOP_MARGIN))
+        screen.blit(self.gridSurface, (0, GAME_STATE_OBJ_SIZE))
         # Renders how many flags are placed.
         font = pygame.font.SysFont(None, 36)
         flags_text = font.render(f"Flag count: {self.flag_count()}", True, (0, 0, 0))
@@ -84,14 +83,14 @@ class Board:
         # Render labels for columns
         for c in range(self.cols):
             colLabel = font.render(chr(65 + c), True, TEXT_COLOR)
-            screen.blit(colLabel, (c * CELL_SIZE + 10, (GAME_STATE_OBJ_SIZE + self.GRID_TOP_MARGIN)-(CELL_SIZE/2) - 10))
+            screen.blit(colLabel, (c * CELL_SIZE + 10, (GAME_STATE_OBJ_SIZE)-(CELL_SIZE/2) - 10))
 
         # Render labels for rows
         for r in range(self.rows):
             rowLabel = font.render(str(r + 1), True, TEXT_COLOR)
             grid_right_edge = COLS * CELL_SIZE   # end of grid
             label_x = grid_right_edge + 10       # row numbers appear right after grid
-            label_y = (GAME_STATE_OBJ_SIZE + self.GRID_TOP_MARGIN) + (r * CELL_SIZE) + 10
+            label_y = (GAME_STATE_OBJ_SIZE) + (r * CELL_SIZE) + 10
             screen.blit(rowLabel, (label_x, label_y))
 
         #player & future timer/highscore
@@ -115,7 +114,7 @@ class Board:
             if line_surf.get_width() <= WIDTH - 20:
                 break
 
-        screen.blit(line_surf, (10, footer_y))
+        screen.blit(line_surf, (10, 590))
 
 
     # Places mines on board.
