@@ -18,36 +18,73 @@ from ai import AI
 
 base_dir = os.path.dirname(os.path.abspath(__file__))  # get directory of current script
 HIGHSCORES_FILE = os.path.join(base_dir, "highscores.txt")  # file to track high scores
-# --- High score file helpers ---
-def load_best_high_score(path):
-    """Return (best_seconds, name) or (None, None) if none."""
-    best = None
-    holder = None
-    if os.path.exists(path):
+# Loading best high score from .txt file
+def load_best_high_score(path, difficulty):
+    best, holder = None, None
+    if os.path.exists(path): # opening file
         with open(path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                # format: seconds,name
-                parts = line.split(",", 1)
-                if len(parts) != 2:
-                    continue
-                try:
-                    secs = float(parts[0])
-                except ValueError:
-                    continue
-                name = parts[1].strip()
-                if secs >= 0 and (best is None or secs < best):
-                    best, holder = secs, name
-    return best, holder
+            lines = f.readlines()
 
-def append_high_score(path, name, seconds):
-    """Append a single score line: seconds,name"""
-    # Make sure folder exists if you ever move highscores into a subfolder
-    with open(path, "a", encoding="utf-8") as f:
-        f.write(f"{seconds:.3f},{name}\n")
-    print(f"[HS] wrote {seconds:.3f},{name} -> {path}")
+        # each line represents the difficulty being played (or no AI)
+        while len(lines) < 4:
+            lines.append("0,None\n")
+
+        index_map = {"easy": 0, "medium": 1, "hard": 2, "no_ai": 3}
+        index = index_map[difficulty]
+
+        line = lines[index].strip()
+        if line:
+            parts = line.split(",", 2)
+            if len(parts) == 3:
+                try:
+                    secs = float(parts[1])
+                    name = parts[2].strip()
+                    if secs > 0:
+                        best, holder = secs, name
+                except ValueError:
+                    pass
+    return best, holder # returning the time and name
+
+
+# updating the high score if the time is faster
+def append_high_score(path, name, seconds, difficulty):
+    if not os.path.exists(path):
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("1,0,None\n")  # easy
+            f.write("2,0,None\n")  # medium
+            f.write("3,0,None\n")  # hard
+            f.write("4,0,None\n")  # no AI
+
+    with open(path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    # pad if file has fewer than 4 lines
+    while len(lines) < 4:
+        lines.append(f"{len(lines)+1},0,None\n")
+
+    index_map = {"easy": 0, "medium": 1, "hard": 2, "no_ai": 3}
+    index = index_map[difficulty]
+
+    # parse current line
+    line = lines[index].strip()
+    parts = line.split(",", 2)
+    if len(parts) == 3:
+        _, old_secs_str, old_name = parts
+        try:
+            old_secs = float(old_secs_str)
+        except ValueError:
+            old_secs = 0
+    else:
+        old_secs, old_name = 0, "None"
+
+    # update if new score is faster OR no score yet
+    if old_secs == 0 or seconds < old_secs:
+        lines[index] = f"{index+1},{seconds:.3f},{name}\n"
+
+    # write back all 4 lines
+    with open(path, "w", encoding="utf-8") as f:
+        f.writelines(lines)
+
 
 # function to get # mines from user
 def mine_input():
@@ -82,6 +119,7 @@ def main():
     player_name = player_name_input() #ask for player name
     # get count of mines
     mine_count = mine_input()
+    # asking user if they want ai
     ai_mode = input("Do you want to enable AI mode? (y/n): ").strip().lower()
     if ai_mode == 'y':
         difficulty = input("Select AI difficulty (easy, medium, hard): ").strip().lower()
@@ -89,18 +127,19 @@ def main():
             print(f"AI mode enabled with {difficulty} difficulty.")
         else:
             print("Invalid difficulty. AI mode disabled.")
-    else:
-        difficulty = []
+    else: # if no ai
+        difficulty = "no_ai"
         print("AI mode disabled.")
+
     # Sets up PyGame and the board.
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Minesweeper")
     board = Board(ROWS, COLS, mine_count, ai_mode, difficulty)
     board.set_player_name(player_name)
-    # Load best score from file on startup
-    best, holder = load_best_high_score(HIGHSCORES_FILE)
-    if best is not None:
+    # load best score from file
+    best, holder = load_best_high_score(HIGHSCORES_FILE, difficulty)
+    if best is not None: #if there is a high score
         board.best_time_seconds = best
         board.best_time_holder = holder
 
@@ -117,7 +156,8 @@ def main():
     # If user opted into AI mode at startup, create AI instance now
     if ai_mode == 'y' and difficulty in ["easy", "medium", "hard"]:
         ai = AI(board, difficulty)
-
+    # starting the timer
+    board.start_timer()
     # Sound
     try:
         # initialize pygame sound mixer if not already initialized
@@ -170,19 +210,24 @@ def main():
         f = pygame.font.SysFont(None, 28) # create a font object w default font at size 28
         txt = f.render(label, True, (0, 0, 0)) # label text is black
         surface.blit(txt, txt.get_rect(center=rect.center)) # draw text centered within button rectangle
+    # used to record a new high score
     def _record_high_score():
-        # Use the real timer value (set elsewhere); if missing, do nothing
+        # stop the timer
+        board.stop_timer()
+
         elapsed_time = getattr(board, "elapsed_time_seconds", None)
         if elapsed_time is None:
-            print("[HS] elapsed_time not set; skipping high-score write")
             return
 
-        append_high_score(HIGHSCORES_FILE, board.player_name, elapsed_time)
-        best, holder = load_best_high_score(HIGHSCORES_FILE)
+        # update file only if this run is better for the current difficulty
+        append_high_score(HIGHSCORES_FILE, board.player_name, elapsed_time, board.difficulty)
+
+        # reload the best score for this difficulty
+        best, holder = load_best_high_score(HIGHSCORES_FILE, board.difficulty)
         if best is not None:
             board.best_time_seconds = best
             board.best_time_holder = holder
-        board.update_high_score(board.player_name, elapsed_time)
+
 
 
     # func to start a new game
@@ -190,16 +235,12 @@ def main():
         nonlocal board, input_handler, played_end, ai, ai_pending, ai_waiting, last_mover
         # recreate board and handler
         board = Board(ROWS, COLS, mine_count, ai_mode, difficulty)
-        # board = Board(ROWS, COLS, mine_count, difficulty)
         board.set_player_name(player_name)
-        # Load best score from file after reset so it still shows
-        best, holder = load_best_high_score(HIGHSCORES_FILE)
+        # load best score from file after reset so it still shows
+        best, holder = load_best_high_score(HIGHSCORES_FILE,board.difficulty)
         if best is not None:
             board.best_time_seconds = best
             board.best_time_holder = holder
-            print(f"[HS] loaded best {best:.3f} by {holder}")  # DEBUG
-        else:
-            print("[HS] no best score yet")
 
         input_handler = InputHandler(board)
         played_end = False
@@ -212,7 +253,7 @@ def main():
             ai = AI(board, difficulty)
         else:
             ai = None
-
+        board.start_timer()
 
     # Status text of game.
     font = pygame.font.SysFont(None, 36)
@@ -369,13 +410,18 @@ def main():
         else:
             screen.blit(playing_text, playing_text.get_rect(topright=(WIDTH - 10, 10)))
 
+        board.update_timer()
+        # draw elapsed time
+        font = pygame.font.SysFont(None, 36)
+        txt = font.render(f"Time: {int(board.elapsed_time_seconds)}s", True, (0,0,0))
+        screen.blit(txt, (200, 10))
         # Draw Reset / Play Again button 
         btn_label = "Play Again" if board.gameOver else "Reset (R)"
         draw_button(screen, reset_btn_rect, btn_label)
 
-        # AI UI removed (AI enabled through startup prompt)
-        # Display.
+        # draw the board, text, etc.
         pygame.display.flip()
+
     pygame.quit()
 
 # Calls main function.

@@ -14,7 +14,7 @@ import random
 from cell import Cell
 from config import *
 import pygame
-
+import time
 # Class for handing the board.
 class Board:
     def __init__(self, rows, cols, mine_count, ai_mode, difficulty):
@@ -28,8 +28,10 @@ class Board:
         self.gameOver = False # bool to check if game over (mine clicked on grid)
         self.victory = False # bool to check if won
         self.player_name = "Player"
-        self.best_time_seconds = None     #filled later by timer logic
-        self.best_time_holder = None      #name tied to best time
+        self.best_time_seconds = None # used for high score   
+        self.best_time_holder = None # name tied to best time
+        self.start_time = None # used for timer
+        self.elapsed_time_seconds = 0 # value of timer
 
     def set_player_name(self, name: str):
         self.player_name = name if name else "Player"
@@ -38,13 +40,7 @@ class Board:
     def flag_count(self):
         flags = sum(cell.isFlagged for row in self.grid for cell in row)
         return max(self.mine_count - flags, 0)
-    def update_high_score(self, player_name, elapsed_time):
-        if elapsed_time is None:
-            return
-        if self.best_time_seconds is None or elapsed_time < self.best_time_seconds:
-            self.best_time_seconds = elapsed_time
-            self.best_time_holder = player_name
-
+        
     # Draws the board.
     def draw(self, screen):
         # Clear once per frame (moved out of the loop)
@@ -70,16 +66,6 @@ class Board:
             mines_text = font.render(f"AI mode disabled", True, (0, 0, 0))  
         screen.blit(mines_text, (10, 70))
 
-        # Render the elapsed game time
-        # Anna needs to add timer logic so we can add a variable to the following line of code to get time to actually appear.
-        # game_time_text = font.render(f"Game time: ", True, (0, 0, 0))
-        # screen.blit(game_time_text, (10, 560))
-
-        # Render the high score (longest elapsed game time)
-        # Sriya needs to ask for player name in main.py
-        # high_score_text = font.render(f"High score: (Achieved by: {self.player_name})" , True, (0, 0, 0))
-        # screen.blit(high_score_text, (10, 590))
-
         # Render labels for columns
         for c in range(self.cols):
             colLabel = font.render(chr(65 + c), True, TEXT_COLOR)
@@ -99,13 +85,12 @@ class Board:
         footer_y = HEIGHT - EXTRA_HEIGHT + 10
 
         # Build labels
-        timer_label = "--"  # replace later with real timer
         hs_label = "--"
-        if self.best_time_seconds is not None and self.best_time_holder:
+        if self.best_time_seconds and self.best_time_holder:
             m, s = divmod(int(self.best_time_seconds), 60)
             hs_label = f"{m:02d}:{s:02d} by {self.best_time_holder}"
 
-        line = f"Player: {self.player_name}   Time: {timer_label}   High score: {hs_label}"
+        line = f"Player: {self.player_name} High score: {hs_label}"
 
         # Fit-to-width: try smaller fonts if needed
         for size in (28, 24, 20, 18):
@@ -192,3 +177,16 @@ class Board:
         if coveredcount == 0:
             self.gameOver = True
             self.victory = True
+
+    # Functions used to render the elapsed game time
+    def start_timer(self):
+        self.start_time = time.time() # current time
+
+    def update_timer(self):
+        if self.start_time is not None and not self.gameOver:
+            self.elapsed_time_seconds = time.time() - self.start_time # updating timer
+
+    def stop_timer(self):
+        if self.start_time is not None:
+            self.elapsed_time_seconds = time.time() - self.start_time # total timer
+            self.start_time = None  
