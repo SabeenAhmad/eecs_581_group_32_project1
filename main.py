@@ -90,12 +90,13 @@ def main():
         else:
             print("Invalid difficulty. AI mode disabled.")
     else:
+        difficulty = []
         print("AI mode disabled.")
     # Sets up PyGame and the board.
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Minesweeper")
-    board = Board(ROWS, COLS, mine_count, difficulty)
+    board = Board(ROWS, COLS, mine_count, ai_mode, difficulty)
     board.set_player_name(player_name)
     # Load best score from file on startup
     best, holder = load_best_high_score(HIGHSCORES_FILE)
@@ -188,6 +189,7 @@ def main():
     def new_game():
         nonlocal board, input_handler, played_end, ai, ai_pending, ai_waiting, last_mover
         # recreate board and handler
+        board = Board(ROWS, COLS, mine_count, ai_mode, difficulty)
         board = Board(ROWS, COLS, mine_count, difficulty)
         board.set_player_name(player_name)
         # Load best score from file after reset so it still shows
