@@ -19,9 +19,9 @@ class InputHandler:
         self.board = board
         self.firstClick = True
 
+    # Centralized reveal logic used by both human input and AI decisions.
     def reveal_cell(self, row, col):
-        """Centralized reveal logic used by both human input and AI decisions.
-        """
+        
         # bounds check
         if not (0 <= row < ROWS and 0 <= col < COLS):
             return False
